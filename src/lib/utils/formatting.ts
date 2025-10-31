@@ -82,17 +82,17 @@ export function formatOverview(overview: string, maxLength?: number): string {
 
 export function getSeriesPoster(images: Image[]): string | undefined {
   const poster = images.find((img) => img.coverType === CoverType.Poster);
-  return poster?.url;
+  return poster?.remoteUrl || poster?.url;
 }
 
 export function getSeriesBanner(images: Image[]): string | undefined {
   const banner = images.find((img) => img.coverType === CoverType.Banner);
-  return banner?.url;
+  return banner?.remoteUrl || banner?.url;
 }
 
 export function getSeriesFanart(images: Image[]): string | undefined {
   const fanart = images.find((img) => img.coverType === CoverType.Fanart);
-  return fanart?.url;
+  return fanart?.remoteUrl || fanart?.url;
 }
 
 export function getRatingDisplay(ratings: Ratings): string {

@@ -1,7 +1,8 @@
 import { Action, ActionPanel, Icon, List, Color, getPreferenceValues } from "@raycast/api";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Preferences } from "@/lib/types/config";
-import { testConnection } from "@/lib/hooks/useSonarrAPI";
+import { testConnection, useSystemStatus, useHealth } from "@/lib/hooks/useSonarrAPI";
+import { HealthCheckType } from "@/lib/types/system";
 
 export default function Command() {
   const preferences = getPreferenceValues<Preferences>();
@@ -12,9 +13,16 @@ export default function Command() {
     version?: string;
   } | null>(null);
 
+  const { data: systemStatus } = useSystemStatus();
+  const { data: healthChecks } = useHealth();
+
   const { http, host, port, base } = preferences;
   const baseUrl = base ? `/${base.replace(/^\/|\/$/g, "")}` : "";
   const sonarrUrl = `${http}://${host}:${port}${baseUrl}`;
+
+  useEffect(() => {
+    handleTestConnection();
+  }, []);
 
   const handleTestConnection = async () => {
     setIsLoading(true);
@@ -29,6 +37,18 @@ export default function Command() {
 
   const statusIcon = connectionStatus?.success ? Icon.CheckCircle : Icon.XMarkCircle;
   const statusColor = connectionStatus?.success ? Color.Green : Color.Red;
+
+  const errors = healthChecks?.filter((check) => check.type === HealthCheckType.Error) || [];
+  const warnings = healthChecks?.filter((check) => check.type === HealthCheckType.Warning) || [];
+  const hasIssues = errors.length > 0 || warnings.length > 0;
+
+  const quickActions = (
+    <ActionPanel.Section title="Quick Actions">
+      <Action.OpenInBrowser title="Open Series Library" url={sonarrUrl} icon={Icon.List} />
+      <Action.OpenInBrowser title="Open Calendar" url={`${sonarrUrl}/calendar`} icon={Icon.Calendar} />
+      <Action.OpenInBrowser title="Open Queue" url={`${sonarrUrl}/queue`} icon={Icon.Download} />
+    </ActionPanel.Section>
+  );
 
   return (
     <List isLoading={isLoading}>
@@ -49,6 +69,7 @@ export default function Command() {
             <ActionPanel>
               <Action title="Test Connection" icon={Icon.Network} onAction={handleTestConnection} />
               <Action.OpenInBrowser title="Open Sonarr" url={sonarrUrl} icon={Icon.Globe} />
+              {quickActions}
             </ActionPanel>
           }
         />
@@ -62,6 +83,7 @@ export default function Command() {
             <ActionPanel>
               <Action.OpenInBrowser title="Open Sonarr" url={sonarrUrl} icon={Icon.Globe} />
               <Action.CopyToClipboard title="Copy URL" content={sonarrUrl} />
+              {quickActions}
             </ActionPanel>
           }
         />
@@ -71,6 +93,12 @@ export default function Command() {
           subtitle={http.toUpperCase()}
           icon={http === "https" ? Icon.Lock : Icon.LockUnlocked}
           accessories={[{ text: http === "https" ? "Secure" : "Insecure" }]}
+          actions={
+            <ActionPanel>
+              <Action.OpenInBrowser title="Open Sonarr" url={sonarrUrl} icon={Icon.Globe} />
+              {quickActions}
+            </ActionPanel>
+          }
         />
 
         {connectionStatus && (
@@ -79,41 +107,104 @@ export default function Command() {
             subtitle={connectionStatus.message}
             icon={Icon.Info}
             accessories={[{ text: connectionStatus.success ? "✅" : "❌" }]}
+            actions={
+              <ActionPanel>
+                <Action.OpenInBrowser title="Open Sonarr" url={sonarrUrl} icon={Icon.Globe} />
+                {quickActions}
+              </ActionPanel>
+            }
           />
         )}
       </List.Section>
 
-      <List.Section title="Quick Actions">
-        <List.Item
-          title="View Series Library"
-          icon={Icon.List}
-          actions={
-            <ActionPanel>
-              <Action.OpenInBrowser title="Open Library" url={`${sonarrUrl}/series`} icon={Icon.Globe} />
-            </ActionPanel>
-          }
-        />
+      {systemStatus && (
+        <List.Section title="System Health">
+          <List.Item
+            title="Sonarr Version"
+            subtitle={systemStatus.version}
+            icon={Icon.Info}
+            accessories={[{ text: systemStatus.osName }]}
+            actions={
+              <ActionPanel>
+                <Action.OpenInBrowser
+                  title="Open System Status"
+                  url={`${sonarrUrl}/system/status`}
+                  icon={Icon.Globe}
+                />
+                {quickActions}
+              </ActionPanel>
+            }
+          />
 
-        <List.Item
-          title="View Calendar"
-          icon={Icon.Calendar}
-          actions={
-            <ActionPanel>
-              <Action.OpenInBrowser title="Open Calendar" url={`${sonarrUrl}/calendar`} icon={Icon.Globe} />
-            </ActionPanel>
-          }
-        />
+          <List.Item
+            title="Health Status"
+            subtitle={
+              hasIssues
+                ? `${errors.length} error${errors.length !== 1 ? "s" : ""}, ${warnings.length} warning${warnings.length !== 1 ? "s" : ""}`
+                : "All systems operational"
+            }
+            icon={hasIssues ? Icon.ExclamationMark : Icon.CheckCircle}
+            accessories={[
+              {
+                tag: {
+                  value: hasIssues ? "Issues Found" : "Healthy",
+                  color: hasIssues ? (errors.length > 0 ? Color.Red : Color.Orange) : Color.Green,
+                },
+              },
+            ]}
+            actions={
+              <ActionPanel>
+                <Action.OpenInBrowser
+                  title="Open System Status"
+                  url={`${sonarrUrl}/system/status`}
+                  icon={Icon.Globe}
+                />
+                {quickActions}
+              </ActionPanel>
+            }
+          />
 
-        <List.Item
-          title="View Queue"
-          icon={Icon.Download}
-          actions={
-            <ActionPanel>
-              <Action.OpenInBrowser title="Open Queue" url={`${sonarrUrl}/queue`} icon={Icon.Globe} />
-            </ActionPanel>
-          }
-        />
-      </List.Section>
+          {errors.map((error) => (
+            <List.Item
+              key={error.source}
+              title={error.message}
+              subtitle={error.source}
+              icon={{ source: Icon.XMarkCircle, tintColor: Color.Red }}
+              accessories={[{ tag: { value: "Error", color: Color.Red } }]}
+              actions={
+                <ActionPanel>
+                  <Action.OpenInBrowser
+                    title="Open System Status"
+                    url={`${sonarrUrl}/system/status`}
+                    icon={Icon.Globe}
+                  />
+                  {quickActions}
+                </ActionPanel>
+              }
+            />
+          ))}
+
+          {warnings.map((warning) => (
+            <List.Item
+              key={warning.source}
+              title={warning.message}
+              subtitle={warning.source}
+              icon={{ source: Icon.Warning, tintColor: Color.Orange }}
+              accessories={[{ tag: { value: "Warning", color: Color.Orange } }]}
+              actions={
+                <ActionPanel>
+                  <Action.OpenInBrowser
+                    title="Open System Status"
+                    url={`${sonarrUrl}/system/status`}
+                    icon={Icon.Globe}
+                  />
+                  {quickActions}
+                </ActionPanel>
+              }
+            />
+          ))}
+        </List.Section>
+      )}
     </List>
   );
 }

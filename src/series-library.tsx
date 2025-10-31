@@ -130,24 +130,11 @@ function SeriesGridItem({ series, onRefresh }: { series: SeriesFull; onRefresh: 
       accessory={{ tooltip: `${episodeStats} episodes` }}
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Series Actions">
-            <Action.Push title="View Details" icon={Icon.Eye} target={<SeriesDetail content={content} />} />
-            {series.path && (
-              <Action.CopyToClipboard
-                title="Copy Path"
-                content={series.path}
-                icon={Icon.Clipboard}
-                shortcut={{ modifiers: ["cmd"], key: "c" }}
-              />
-            )}
-          </ActionPanel.Section>
-
           <ActionPanel.Section title="Open">
             <Action.OpenInBrowser
               title="Open in Sonarr"
               url={`${sonarrUrl}/series/${series.titleSlug}`}
               icon={Icon.Globe}
-              shortcut={{ modifiers: ["cmd"], key: "o" }}
             />
             {series.tvdbId && (
               <Action.OpenInBrowser
@@ -161,6 +148,23 @@ function SeriesGridItem({ series, onRefresh }: { series: SeriesFull; onRefresh: 
                 title="Open in Imdb"
                 url={`https://www.imdb.com/title/${series.imdbId}`}
                 icon={Icon.Link}
+              />
+            )}
+          </ActionPanel.Section>
+
+          <ActionPanel.Section title="Series Actions">
+            <Action.Push
+              title="View Details"
+              icon={Icon.Eye}
+              target={<SeriesDetail content={content} />}
+              shortcut={{ modifiers: ["cmd"], key: "d" }}
+            />
+            {series.path && (
+              <Action.CopyToClipboard
+                title="Copy Path"
+                content={series.path}
+                icon={Icon.Clipboard}
+                shortcut={{ modifiers: ["cmd"], key: "c" }}
               />
             )}
           </ActionPanel.Section>

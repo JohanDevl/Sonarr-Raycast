@@ -1,5 +1,5 @@
 import { Action, ActionPanel, Icon, List, Color, confirmAlert, Alert, Image } from "@raycast/api";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { QueueItem } from "@/lib/types/queue";
 import { useQueue, removeQueueItem } from "@/lib/hooks/useSonarrAPI";
 import {
@@ -12,10 +12,24 @@ import {
 } from "@/lib/utils/formatting";
 
 export default function Command() {
+  const [searchText, setSearchText] = useState("");
   const { data, isLoading, mutate } = useQueue();
 
+  const filteredData = useMemo(() => {
+    const queueItems = data?.records || [];
+
+    if (!searchText) return queueItems;
+
+    return queueItems.filter(
+      (item) =>
+        item.title.toLowerCase().includes(searchText.toLowerCase()) ||
+        (item.series?.title || "").toLowerCase().includes(searchText.toLowerCase()),
+    );
+  }, [data, searchText]);
+
   const hasActiveDownloads = useMemo(() => {
-    return (data || []).some((item) => item.status === "downloading");
+    const queueItems = data?.records || [];
+    return queueItems.some((item) => item.status === "downloading");
   }, [data]);
 
   useEffect(() => {
@@ -29,16 +43,22 @@ export default function Command() {
   }, [hasActiveDownloads, mutate]);
 
   return (
-    <List searchBarPlaceholder="Search downloads..." isLoading={isLoading} isShowingDetail>
-      {data && data.length === 0 && (
+    <List
+      searchBarPlaceholder="Search downloads..."
+      isLoading={isLoading}
+      isShowingDetail
+      filtering={false}
+      onSearchTextChange={setSearchText}
+    >
+      {filteredData.length === 0 && !isLoading && (
         <List.EmptyView
-          title="Queue is Empty"
-          description="No active downloads or queued episodes"
+          title={searchText ? "No Results" : "Queue is Empty"}
+          description={searchText ? "No downloads match your search" : "No active downloads or queued episodes"}
           icon={Icon.Download}
         />
       )}
-      <List.Section title="Download Queue" subtitle={`${(data || []).length} items`}>
-        {(data || []).map((item) => (
+      <List.Section title="Download Queue" subtitle={`${filteredData.length} items`}>
+        {filteredData.map((item) => (
           <QueueListItem key={item.id} item={item} onRefresh={mutate} />
         ))}
       </List.Section>

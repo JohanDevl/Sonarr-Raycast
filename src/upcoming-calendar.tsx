@@ -1,5 +1,5 @@
 import { Action, ActionPanel, Icon, List, getPreferenceValues, confirmAlert, Alert, Color, Image } from "@raycast/api";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { SingleSeries } from "@/lib/types/episode";
 import type { Preferences } from "@/lib/types/config";
 import { useCalendar, searchEpisode, searchSeason, toggleEpisodeMonitoring } from "@/lib/hooks/useSonarrAPI";
@@ -17,13 +17,32 @@ import {
 export default function Command() {
   const preferences = getPreferenceValues<Preferences>();
   const futureDays = parseInt(preferences.futureDays || "14");
+  const [searchText, setSearchText] = useState("");
 
   const { data, isLoading, mutate } = useCalendar(futureDays);
 
+  const filteredEpisodes = useMemo(() => {
+    if (!data) return [];
+
+    if (!searchText) return data;
+
+    return data.filter(
+      (episode) =>
+        episode.title.toLowerCase().includes(searchText.toLowerCase()) ||
+        episode.series.title.toLowerCase().includes(searchText.toLowerCase()),
+    );
+  }, [data, searchText]);
+
   return (
-    <List searchBarPlaceholder="Search upcoming episodes..." isLoading={isLoading} isShowingDetail>
-      <List.Section title="Upcoming Episodes" subtitle={`${(data || []).length} episodes`}>
-        {(data || []).map((episode) => (
+    <List
+      searchBarPlaceholder="Search upcoming episodes..."
+      isLoading={isLoading}
+      isShowingDetail
+      filtering={false}
+      onSearchTextChange={setSearchText}
+    >
+      <List.Section title="Upcoming Episodes" subtitle={`${filteredEpisodes.length} episodes`}>
+        {filteredEpisodes.map((episode) => (
           <EpisodeListItem key={episode.id} episode={episode} onRefresh={mutate} />
         ))}
       </List.Section>
@@ -133,10 +152,9 @@ function EpisodeListItem({ episode, onRefresh }: { episode: SingleSeries; onRefr
   return (
     <List.Item
       title={episode.title}
-      subtitle={formatEpisodeNumber(episode.seasonNumber, episode.episodeNumber)}
+      subtitle={`${episode.series.title} • ${formatEpisodeNumber(episode.seasonNumber, episode.episodeNumber)}`}
       icon={{ source: poster || Icon.Video, mask: poster ? undefined : Image.Mask.Circle }}
       accessories={[
-        { text: episode.series.title },
         { text: formatAirDate(episode.airDateUtc) },
         {
           icon: episode.monitored ? Icon.Eye : Icon.EyeSlash,

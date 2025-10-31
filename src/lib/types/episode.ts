@@ -101,6 +101,7 @@ export interface Series {
 export interface Image {
   coverType: CoverType;
   url: string;
+  remoteUrl?: string;
 }
 
 export enum CoverType {

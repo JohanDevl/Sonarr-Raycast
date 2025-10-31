@@ -55,7 +55,7 @@ export function useSeries() {
 }
 
 export function useQueue() {
-  return useSonarrAPI<QueueItem[]>("/queue?includeEpisode=true&includeSeries=true");
+  return useSonarrAPI<{ records: QueueItem[] }>("/queue?includeEpisode=true&includeSeries=true");
 }
 
 export function useWantedMissing(page: number = 1, pageSize: number = 50) {

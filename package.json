@@ -58,17 +58,10 @@
       "mode": "view"
     },
     {
-      "name": "system-status",
-      "title": "System Status",
-      "subtitle": "Sonarr",
-      "description": "Check Sonarr system health and version",
-      "mode": "no-view"
-    },
-    {
       "name": "instance-status",
       "title": "Instance Status",
       "subtitle": "Sonarr",
-      "description": "View connection status and quick actions for your Sonarr instance",
+      "description": "View connection status, system health, and quick actions for your Sonarr instance",
       "mode": "view"
     }
   ],
@@ -156,16 +149,12 @@
     "date-fns": "^4.1.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.38.0",
-    "@raycast/eslint-plugin": "^2.1.1",
+    "@raycast/eslint-config": "^2.1.1",
     "@types/node": "^24.9.2",
     "@types/react": "^19.2.2",
     "eslint": "^9.38.0",
-    "eslint-config-prettier": "^10.1.8",
-    "globals": "^16.4.0",
-    "prettier": "^3.4.2",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.45.0"
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3"
   },
   "scripts": {
     "build": "ray build -e dist",

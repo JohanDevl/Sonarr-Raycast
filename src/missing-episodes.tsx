@@ -17,6 +17,7 @@ type FilterStatus = "all" | "missing" | "upcoming" | "unreleased";
 
 export default function Command() {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+  const [searchText, setSearchText] = useState("");
   const { data, isLoading, mutate } = useWantedMissing(1, 100);
 
   const filteredEpisodes = useMemo(() => {
@@ -27,19 +28,29 @@ export default function Command() {
       const hasAired = isPast(airDate);
       const willAir = isFuture(airDate);
 
-      if (filterStatus === "all") return true;
-      if (filterStatus === "missing") return hasAired;
-      if (filterStatus === "upcoming") return willAir;
-      if (filterStatus === "unreleased") return !episode.airDate;
-      return true;
+      // Filter by status
+      let statusMatch = true;
+      if (filterStatus === "missing") statusMatch = hasAired;
+      else if (filterStatus === "upcoming") statusMatch = willAir;
+      else if (filterStatus === "unreleased") statusMatch = !episode.airDate;
+
+      // Filter by search text
+      const searchMatch =
+        !searchText ||
+        episode.title.toLowerCase().includes(searchText.toLowerCase()) ||
+        (episode.series?.title || "").toLowerCase().includes(searchText.toLowerCase());
+
+      return statusMatch && searchMatch;
     });
-  }, [data, filterStatus]);
+  }, [data, filterStatus, searchText]);
 
   return (
     <List
       searchBarPlaceholder="Search missing episodes..."
       isLoading={isLoading}
       isShowingDetail
+      filtering={false}
+      onSearchTextChange={setSearchText}
       searchBarAccessory={
         <List.Dropdown
           tooltip="Filter by Status"
@@ -147,10 +158,13 @@ function MissingEpisodeListItem({ episode, onRefresh }: { episode: WantedMissing
   return (
     <List.Item
       title={episode.title}
-      subtitle={formatEpisodeNumber(episode.seasonNumber, episode.episodeNumber)}
+      subtitle={
+        episode.series
+          ? `${episode.series.title} • ${formatEpisodeNumber(episode.seasonNumber, episode.episodeNumber)}`
+          : formatEpisodeNumber(episode.seasonNumber, episode.episodeNumber)
+      }
       icon={{ source: poster || Icon.Video, mask: poster ? undefined : Image.Mask.Circle }}
       accessories={[
-        { text: episode.series?.title },
         { text: formatAirDate(episode.airDateUtc) },
         {
           tag: {

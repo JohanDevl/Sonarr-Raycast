@@ -1,22 +1,12 @@
-const js = require("@eslint/js");
-const typescript = require("typescript-eslint");
-const raycastPlugin = require("@raycast/eslint-plugin");
-const prettier = require("eslint-config-prettier");
-const globals = require("globals");
+const raycastConfig = require("@raycast/eslint-config");
+
+// Flatten the config array to handle nested arrays
+function flattenConfig(config) {
+  return config.flatMap((item) => (Array.isArray(item) ? item : [item]));
+}
 
 module.exports = [
-  js.configs.recommended,
-  ...typescript.configs.recommended,
-  {
-    languageOptions: {
-      ecmaVersion: 2022,
-      globals: {
-        ...globals.node,
-      },
-    },
-  },
-  ...raycastPlugin.configs.recommended,
-  prettier,
+  ...flattenConfig(raycastConfig),
   {
     rules: {
       "@typescript-eslint/consistent-type-imports": "error",
