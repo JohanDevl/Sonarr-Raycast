@@ -1,21 +1,21 @@
-import { Action, ActionPanel, Icon, List, Color, confirmAlert, Alert, Image } from "@raycast/api";
-import { useEffect, useMemo, useState } from "react";
+import { removeQueueItem, useQueue } from "@/lib/hooks/useSonarrAPI";
 import type { QueueItem } from "@/lib/types/queue";
-import { useQueue, removeQueueItem } from "@/lib/hooks/useSonarrAPI";
 import {
-  formatFileSize,
-  formatTimeLeft,
+  formatAirDate,
   formatDownloadProgress,
   formatEpisodeNumber,
+  formatFileSize,
+  formatTimeLeft,
   getSeriesPoster,
-  formatAirDate,
 } from "@/lib/utils/formatting";
+import { Action, ActionPanel, Alert, Color, confirmAlert, Icon, Image, List } from "@raycast/api";
+import { useEffect, useMemo, useState } from "react";
 
 export default function Command() {
   const [searchText, setSearchText] = useState("");
   const { data, isLoading, mutate } = useQueue();
 
-  const filteredData = useMemo(() => {
+  const filteredData = useMemo<QueueItem[]>(() => {
     const queueItems = data?.records || [];
 
     if (!searchText) return queueItems;
@@ -27,7 +27,7 @@ export default function Command() {
     );
   }, [data, searchText]);
 
-  const hasActiveDownloads = useMemo(() => {
+  const hasActiveDownloads = useMemo<boolean>(() => {
     const queueItems = data?.records || [];
     return queueItems.some((item) => item.status === "downloading");
   }, [data]);
