@@ -1,31 +1,32 @@
 export interface SystemStatus {
   version: string;
-  buildTime: string;
-  isDebug: boolean;
-  isProduction: boolean;
-  isAdmin: boolean;
-  isUserInteractive: boolean;
-  startupPath: string;
-  appData: string;
-  osName: string;
-  osVersion: string;
-  isMonoRuntime: boolean;
-  isMono: boolean;
-  isLinux: boolean;
-  isOsx: boolean;
-  isWindows: boolean;
-  mode: string;
-  branch: string;
-  authentication: string;
-  sqliteVersion: string;
-  migrationVersion: number;
-  urlBase: string;
-  runtimeVersion: string;
-  runtimeName: string;
-  startTime: string;
+  buildTime?: string;
+  isDebug?: boolean;
+  isProduction?: boolean;
+  isAdmin?: boolean;
+  isUserInteractive?: boolean;
+  startupPath?: string;
+  appData?: string;
+  osName?: string;
+  osVersion?: string;
+  isMonoRuntime?: boolean;
+  isMono?: boolean;
+  isLinux?: boolean;
+  isOsx?: boolean;
+  isWindows?: boolean;
+  mode?: string;
+  branch?: string;
+  authentication?: string;
+  sqliteVersion?: string;
+  migrationVersion?: number;
+  urlBase?: string;
+  runtimeVersion?: string;
+  runtimeName?: string;
+  startTime?: string;
   packageVersion?: string;
   packageAuthor?: string;
   packageUpdateMechanism?: string;
+  [key: string]: unknown;
 }
 
 export interface HealthCheck {
@@ -40,13 +41,6 @@ export enum HealthCheckType {
   Notice = "notice",
   Warning = "warning",
   Error = "error",
-}
-
-export interface DiskSpace {
-  path: string;
-  label: string;
-  freeSpace: number;
-  totalSpace: number;
 }
 
 export interface Command {

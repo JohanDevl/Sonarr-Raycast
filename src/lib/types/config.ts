@@ -6,8 +6,3 @@ export interface Preferences {
   apiKey: string;
   futureDays?: "7" | "14" | "30" | "180";
 }
-
-export interface SonarrConfig {
-  url: string;
-  apiKey: string;
-}

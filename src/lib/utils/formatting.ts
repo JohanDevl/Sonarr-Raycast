@@ -1,6 +1,15 @@
+import { getPreferenceValues } from "@raycast/api";
 import { format, formatDistanceToNow, isPast, isFuture } from "date-fns";
 import type { Image, Ratings } from "@/lib/types/episode";
+import type { Preferences } from "@/lib/types/config";
 import { CoverType } from "@/lib/types/episode";
+
+export function getSonarrUrl(): string {
+  const preferences = getPreferenceValues<Preferences>();
+  const { http, host, port, base } = preferences;
+  const baseUrl = base ? `/${base.replace(/^\/|\/$/g, "")}` : "";
+  return `${http}://${host}:${port}${baseUrl}`;
+}
 
 export function formatSeriesTitle(title: string, year?: number): string {
   if (year) {
@@ -32,30 +41,12 @@ export function formatDuration(minutes: number): string {
   return `${mins}m`;
 }
 
-export function formatReleaseDate(dateString: string): string {
-  try {
-    const date = new Date(dateString);
-    return format(date, "MMM d, yyyy");
-  } catch {
-    return "Unknown";
-  }
-}
-
 export function formatAirDate(dateString: string): string {
   try {
     const date = new Date(dateString);
     return format(date, "EEE, MMM d, yyyy");
   } catch {
     return "Unknown";
-  }
-}
-
-export function formatAirTime(dateString: string): string {
-  try {
-    const date = new Date(dateString);
-    return format(date, "h:mm a");
-  } catch {
-    return "";
   }
 }
 
@@ -83,16 +74,6 @@ export function formatOverview(overview: string, maxLength?: number): string {
 export function getSeriesPoster(images: Image[]): string | undefined {
   const poster = images.find((img) => img.coverType === CoverType.Poster);
   return poster?.remoteUrl || poster?.url;
-}
-
-export function getSeriesBanner(images: Image[]): string | undefined {
-  const banner = images.find((img) => img.coverType === CoverType.Banner);
-  return banner?.remoteUrl || banner?.url;
-}
-
-export function getSeriesFanart(images: Image[]): string | undefined {
-  const fanart = images.find((img) => img.coverType === CoverType.Fanart);
-  return fanart?.remoteUrl || fanart?.url;
 }
 
 export function getRatingDisplay(ratings: Ratings): string {
@@ -132,16 +113,6 @@ export function formatEpisodeNumber(seasonNumber: number, episodeNumber: number)
   const season = seasonNumber.toString().padStart(2, "0");
   const episode = episodeNumber.toString().padStart(2, "0");
   return `S${season}E${episode}`;
-}
-
-export function formatPercentage(value: number): string {
-  return `${Math.round(value)}%`;
-}
-
-export function truncateText(text: string, maxLength: number): string {
-  if (!text) return "";
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength).trim() + "...";
 }
 
 export function getEpisodeStatus(

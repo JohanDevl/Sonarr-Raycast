@@ -1,12 +1,22 @@
 import { useFetch } from "@raycast/utils";
 import { getPreferenceValues, showToast, Toast } from "@raycast/api";
 import { addDays, format } from "date-fns";
+import { z } from "zod";
 import type { SingleSeries } from "@/lib/types/episode";
 import type { SeriesFull, SeriesLookup, RootFolder, QualityProfile, AddSeriesOptions } from "@/lib/types/series";
 import type { QueueItem } from "@/lib/types/queue";
 import type { WantedMissingResponse } from "@/lib/types/wanted";
 import type { SystemStatus, HealthCheck, Command } from "@/lib/types/system";
 import type { Preferences } from "@/lib/types/config";
+import {
+  SeriesLookupSchema,
+  SeriesFullSchema,
+  RootFolderSchema,
+  QualityProfileSchema,
+  SystemStatusSchema,
+  CommandSchema,
+} from "@/lib/types/schemas";
+import { fetchAndValidate, fetchWithTimeout } from "@/lib/utils/api-helpers";
 
 function getApiConfig() {
   const preferences = getPreferenceValues<Preferences>();
@@ -77,15 +87,9 @@ export async function searchSeries(searchTerm: string): Promise<SeriesLookup[]> 
   const encodedTerm = encodeURIComponent(searchTerm);
 
   try {
-    const response = await fetch(`${url}/api/v3/series/lookup?term=${encodedTerm}`, {
+    return await fetchAndValidate(`${url}/api/v3/series/lookup?term=${encodedTerm}`, z.array(SeriesLookupSchema), {
       headers,
     });
-
-    if (!response.ok) {
-      throw new Error(`API returned ${response.status}`);
-    }
-
-    return (await response.json()) as SeriesLookup[];
   } catch (error) {
     showToast({
       style: Toast.Style.Failure,
@@ -100,7 +104,7 @@ export async function addSeries(options: AddSeriesOptions): Promise<SeriesFull> 
   const { url, headers } = getApiConfig();
 
   try {
-    const response = await fetch(`${url}/api/v3/series`, {
+    const result = await fetchAndValidate(`${url}/api/v3/series`, SeriesFullSchema, {
       method: "POST",
       headers: {
         ...headers,
@@ -109,18 +113,13 @@ export async function addSeries(options: AddSeriesOptions): Promise<SeriesFull> 
       body: JSON.stringify(options),
     });
 
-    if (!response.ok) {
-      const errorData = (await response.json()) as { message?: string };
-      throw new Error(errorData.message || `API returned ${response.status}`);
-    }
-
     showToast({
       style: Toast.Style.Success,
       title: "Series added successfully",
       message: options.title,
     });
 
-    return (await response.json()) as SeriesFull;
+    return result;
   } catch (error) {
     showToast({
       style: Toast.Style.Failure,
@@ -135,7 +134,7 @@ export async function removeQueueItem(id: number, blocklist: boolean = false): P
   const { url, headers } = getApiConfig();
 
   try {
-    const response = await fetch(`${url}/api/v3/queue/${id}?blocklist=${blocklist}`, {
+    const response = await fetchWithTimeout(`${url}/api/v3/queue/${id}?blocklist=${blocklist}`, {
       method: "DELETE",
       headers,
     });
@@ -162,7 +161,7 @@ export async function executeCommand(command: string, body: Record<string, unkno
   const { url, headers } = getApiConfig();
 
   try {
-    const response = await fetch(`${url}/api/v3/command`, {
+    return await fetchAndValidate(`${url}/api/v3/command`, CommandSchema, {
       method: "POST",
       headers: {
         ...headers,
@@ -173,12 +172,6 @@ export async function executeCommand(command: string, body: Record<string, unkno
         ...body,
       }),
     });
-
-    if (!response.ok) {
-      throw new Error(`API returned ${response.status}`);
-    }
-
-    return (await response.json()) as Command;
   } catch (error) {
     showToast({
       style: Toast.Style.Failure,
@@ -225,7 +218,7 @@ export async function toggleEpisodeMonitoring(episodeId: number, monitored: bool
   const { url, headers } = getApiConfig();
 
   try {
-    const response = await fetch(`${url}/api/v3/episode/monitor`, {
+    const response = await fetchWithTimeout(`${url}/api/v3/episode/monitor`, {
       method: "PUT",
       headers: {
         ...headers,
@@ -259,15 +252,7 @@ export async function getRootFolders(): Promise<RootFolder[]> {
   const { url, headers } = getApiConfig();
 
   try {
-    const response = await fetch(`${url}/api/v3/rootfolder`, {
-      headers,
-    });
-
-    if (!response.ok) {
-      throw new Error(`API returned ${response.status}`);
-    }
-
-    return (await response.json()) as RootFolder[];
+    return await fetchAndValidate(`${url}/api/v3/rootfolder`, z.array(RootFolderSchema), { headers });
   } catch (error) {
     showToast({
       style: Toast.Style.Failure,
@@ -282,15 +267,10 @@ export async function getQualityProfiles(): Promise<QualityProfile[]> {
   const { url, headers } = getApiConfig();
 
   try {
-    const response = await fetch(`${url}/api/v3/qualityprofile`, {
+    const profiles = await fetchAndValidate(`${url}/api/v3/qualityprofile`, z.array(QualityProfileSchema), {
       headers,
     });
-
-    if (!response.ok) {
-      throw new Error(`API returned ${response.status}`);
-    }
-
-    return (await response.json()) as QualityProfile[];
+    return profiles as QualityProfile[];
   } catch (error) {
     showToast({
       style: Toast.Style.Failure,
@@ -305,18 +285,11 @@ export async function testConnection(): Promise<{ success: boolean; message: str
   const { url, headers } = getApiConfig();
 
   try {
-    const response = await fetch(`${url}/api/v3/system/status`, {
+    const status = await fetchAndValidate(`${url}/api/v3/system/status`, SystemStatusSchema, {
       headers,
+      timeout: 15000,
+      retries: 2,
     });
-
-    if (!response.ok) {
-      return {
-        success: false,
-        message: `Connection failed: HTTP ${response.status}`,
-      };
-    }
-
-    const status = (await response.json()) as SystemStatus;
 
     return {
       success: true,

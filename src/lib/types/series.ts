@@ -98,7 +98,7 @@ export interface RootFolder {
   path: string;
   accessible: boolean;
   freeSpace: number;
-  unmappedFolders: unknown[];
+  unmappedFolders: Array<{ name: string; path: string }>;
 }
 
 export interface QualityProfile {

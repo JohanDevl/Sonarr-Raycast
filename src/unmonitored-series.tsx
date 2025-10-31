@@ -1,7 +1,6 @@
-import { Action, ActionPanel, Icon, Grid, List, getPreferenceValues } from "@raycast/api";
+import { Action, ActionPanel, Icon, Grid } from "@raycast/api";
 import { useState, useMemo } from "react";
 import type { SeriesFull } from "@/lib/types/series";
-import type { Preferences } from "@/lib/types/config";
 import { useSeries } from "@/lib/hooks/useSonarrAPI";
 import {
   formatSeriesTitle,
@@ -10,7 +9,9 @@ import {
   getSeriesStatus,
   formatOverview,
   formatFileSize,
+  getSonarrUrl,
 } from "@/lib/utils/formatting";
+import { SeriesDetail } from "@/lib/components/SeriesDetail";
 
 type FilterStatus = "all" | "available" | "missing";
 
@@ -64,10 +65,7 @@ export default function Command() {
 }
 
 function SeriesGridItem({ series, onRefresh }: { series: SeriesFull; onRefresh: () => void }) {
-  const preferences = getPreferenceValues<Preferences>();
-  const { http, host, port, base } = preferences;
-  const baseUrl = base ? `/${base.replace(/^\/|\/$/g, "")}` : "";
-  const sonarrUrl = `${http}://${host}:${port}${baseUrl}`;
+  const sonarrUrl = getSonarrUrl();
 
   const poster = getSeriesPoster(series.images);
 
@@ -174,13 +172,5 @@ function SeriesGridItem({ series, onRefresh }: { series: SeriesFull; onRefresh: 
         </ActionPanel>
       }
     />
-  );
-}
-
-function SeriesDetail({ content }: { content: string }) {
-  return (
-    <List>
-      <List.Item title="Details" detail={<List.Item.Detail markdown={content} />} />
-    </List>
   );
 }

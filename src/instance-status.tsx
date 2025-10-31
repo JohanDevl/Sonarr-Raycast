@@ -1,11 +1,13 @@
 import { Action, ActionPanel, Icon, List, Color, getPreferenceValues } from "@raycast/api";
 import { useState, useEffect } from "react";
 import type { Preferences } from "@/lib/types/config";
+import { getSonarrUrl } from "@/lib/utils/formatting";
 import { testConnection, useSystemStatus, useHealth } from "@/lib/hooks/useSonarrAPI";
 import { HealthCheckType } from "@/lib/types/system";
 
 export default function Command() {
   const preferences = getPreferenceValues<Preferences>();
+  const { host, port, http } = preferences;
   const [isLoading, setIsLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<{
     success: boolean;
@@ -16,9 +18,7 @@ export default function Command() {
   const { data: systemStatus } = useSystemStatus();
   const { data: healthChecks } = useHealth();
 
-  const { http, host, port, base } = preferences;
-  const baseUrl = base ? `/${base.replace(/^\/|\/$/g, "")}` : "";
-  const sonarrUrl = `${http}://${host}:${port}${baseUrl}`;
+  const sonarrUrl = getSonarrUrl();
 
   useEffect(() => {
     handleTestConnection();
@@ -126,11 +126,7 @@ export default function Command() {
             accessories={[{ text: systemStatus.osName }]}
             actions={
               <ActionPanel>
-                <Action.OpenInBrowser
-                  title="Open System Status"
-                  url={`${sonarrUrl}/system/status`}
-                  icon={Icon.Globe}
-                />
+                <Action.OpenInBrowser title="Open System Status" url={`${sonarrUrl}/system/status`} icon={Icon.Globe} />
                 {quickActions}
               </ActionPanel>
             }
@@ -154,11 +150,7 @@ export default function Command() {
             ]}
             actions={
               <ActionPanel>
-                <Action.OpenInBrowser
-                  title="Open System Status"
-                  url={`${sonarrUrl}/system/status`}
-                  icon={Icon.Globe}
-                />
+                <Action.OpenInBrowser title="Open System Status" url={`${sonarrUrl}/system/status`} icon={Icon.Globe} />
                 {quickActions}
               </ActionPanel>
             }

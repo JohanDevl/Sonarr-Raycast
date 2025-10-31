@@ -1,8 +1,7 @@
-import { Action, ActionPanel, Icon, List, getPreferenceValues, Color, Image } from "@raycast/api";
+import { Action, ActionPanel, Icon, List, Color, Image } from "@raycast/api";
 import { useState, useMemo } from "react";
 import { isFuture, isPast } from "date-fns";
 import type { WantedMissingEpisode } from "@/lib/types/wanted";
-import type { Preferences } from "@/lib/types/config";
 import { useWantedMissing, searchEpisode } from "@/lib/hooks/useSonarrAPI";
 import {
   formatAirDate,
@@ -11,6 +10,7 @@ import {
   getSeriesPoster,
   getRatingDisplay,
   formatRelativeTime,
+  getSonarrUrl,
 } from "@/lib/utils/formatting";
 
 type FilterStatus = "all" | "missing" | "upcoming" | "unreleased";
@@ -81,10 +81,7 @@ export default function Command() {
 }
 
 function MissingEpisodeListItem({ episode, onRefresh }: { episode: WantedMissingEpisode; onRefresh: () => void }) {
-  const preferences = getPreferenceValues<Preferences>();
-  const { http, host, port, base } = preferences;
-  const baseUrl = base ? `/${base.replace(/^\/|\/$/g, "")}` : "";
-  const sonarrUrl = `${http}://${host}:${port}${baseUrl}`;
+  const sonarrUrl = getSonarrUrl();
 
   const poster = episode.series ? getSeriesPoster(episode.series.images) : undefined;
   const airDate = new Date(episode.airDateUtc);

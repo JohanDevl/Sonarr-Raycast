@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Icon, List, getPreferenceValues, confirmAlert, Alert, Color, Image } from "@raycast/api";
+import { Action, ActionPanel, Icon, List, confirmAlert, Alert, Color, Image, getPreferenceValues } from "@raycast/api";
 import { useMemo, useState } from "react";
 import type { SingleSeries } from "@/lib/types/episode";
 import type { Preferences } from "@/lib/types/config";
@@ -12,6 +12,7 @@ import {
   getEpisodeStatus,
   formatFileSize,
   formatQualityProfile,
+  getSonarrUrl,
 } from "@/lib/utils/formatting";
 
 export default function Command() {
@@ -51,10 +52,7 @@ export default function Command() {
 }
 
 function EpisodeListItem({ episode, onRefresh }: { episode: SingleSeries; onRefresh: () => void }) {
-  const preferences = getPreferenceValues<Preferences>();
-  const { http, host, port, base } = preferences;
-  const baseUrl = base ? `/${base.replace(/^\/|\/$/g, "")}` : "";
-  const sonarrUrl = `${http}://${host}:${port}${baseUrl}`;
+  const sonarrUrl = getSonarrUrl();
 
   const status = getEpisodeStatus(episode.airDateUtc, episode.hasFile, episode.monitored);
   const poster = getSeriesPoster(episode.series.images);

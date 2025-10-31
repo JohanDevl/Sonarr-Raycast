@@ -47,13 +47,3 @@ export interface StatusMessage {
   title: string;
   messages: string[];
 }
-
-export interface QueueStatus {
-  totalCount: number;
-  count: number;
-  unknownCount: number;
-  errors: boolean;
-  warnings: boolean;
-  unknownErrors: boolean;
-  unknownWarnings: boolean;
-}
